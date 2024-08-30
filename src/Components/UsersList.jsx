@@ -11,19 +11,21 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  Box,
   useDisclosure,
+  Alert,
+  AlertIcon,
+  Box,
 } from "@chakra-ui/react";
 import { FaEllipsisV } from "react-icons/fa";
 import axios from "axios";
-import UserFormModal from "./UserForm";
-import DeletePopup from "./DeletePopup";
 import Pagination from "./Pagination";
+import DeletePopup from "./DeletePopup";
+import UserForm from "./UserForm";
 
 const UserList = () => {
-  const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 10;
+  const usersPerPage = 5;
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [error, setError] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -39,10 +41,6 @@ const UserList = () => {
       .then((response) => setUsers(response.data))
       .catch(() => setError("Failed to fetch users"));
   }, []);
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
 
   const handleEdit = (user) => {
     setSelectedUser(user);
@@ -64,13 +62,31 @@ const UserList = () => {
       .catch(() => setError("Failed to delete user"));
   };
 
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleUserUpdate = (updatedUser) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
+    );
+    onClose();
+  };
+
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(users.length / usersPerPage);
 
   return (
-    <Box>
+    <Box p={{ base: 4, md: 6 }}>
+      {error && (
+        <Alert status="error" mb={4}>
+          <AlertIcon />
+          {error}
+        </Alert>
+      )}
+
       <Table variant="simple" size={{ base: "sm", md: "md" }}>
         <Thead>
           <Tr>
@@ -117,14 +133,16 @@ const UserList = () => {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        mt={4}
       />
+
       {selectedUser && (
-        <UserFormModal
+        <UserForm
           isOpen={isOpen}
           onClose={onClose}
           user={selectedUser}
-          setUser={setSelectedUser}
-          refreshUsers={setUsers}
+          onUserUpdate={handleUserUpdate}
+          isAdding={false}
         />
       )}
 

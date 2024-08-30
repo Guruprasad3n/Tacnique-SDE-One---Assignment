@@ -4,37 +4,39 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalCloseButton,
   ModalBody,
   ModalFooter,
   Button,
+  Input,
   FormControl,
   FormLabel,
-  Input,
+  FormErrorMessage,
   useToast,
 } from "@chakra-ui/react";
-import axios from "axios";
 
-const UserFormModal = ({ isOpen, onClose, user, setUser, refreshUsers }) => {
+const UserForm = ({
+  isOpen,
+  onClose,
+  user,
+  onUserUpdate = () => {},
+  isAdding,
+}) => {
   const [formData, setFormData] = useState({
+    id: "",
     name: "",
     email: "",
     company: { name: "" },
   });
+  const [errors, setErrors] = useState({});
   const toast = useToast();
 
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name,
-        email: user.email,
-        company: { name: user.company.name },
-      });
-    } else {
-      setFormData({
-        name: "",
-        email: "",
-        company: { name: "" },
+        id: user.id || "",
+        name: user.name || "",
+        email: user.email || "",
+        company: { name: user.company?.name || "" },
       });
     }
   }, [user]);
@@ -47,44 +49,41 @@ const UserFormModal = ({ isOpen, onClose, user, setUser, refreshUsers }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (user) {
-        await axios.put(
-          `https://jsonplaceholder.typicode.com/users/${user.id}`,
-          formData
-        );
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.name) {
+      newErrors.name = "Name is required";
+    }
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Valid email is required";
+    }
+    if (isAdding && !formData.id) {
+      newErrors.id = "ID is required";
+    }
+    if (!formData.company.name) {
+      newErrors.company = "Company name is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (validate()) {
+      if (typeof onUserUpdate === "function") {
+        onUserUpdate(formData);
         toast({
-          title: "User updated.",
-          description: "The user data has been updated.",
+          title: isAdding ? "User added." : "User updated.",
+          description: isAdding
+            ? "User has been added successfully."
+            : "User information has been updated successfully.",
           status: "success",
           duration: 5000,
           isClosable: true,
         });
+        onClose();
       } else {
-        await axios.post(
-          "https://jsonplaceholder.typicode.com/users",
-          formData
-        );
-        toast({
-          title: "User added.",
-          description: "The new user has been added.",
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
+        console.error("onUserUpdate is not a function");
       }
-      refreshUsers();
-      onClose();
-    } catch (error) {
-      toast({
-        title: "An error occurred.",
-        description: "Unable to save user data.",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
     }
   };
 
@@ -92,49 +91,56 @@ const UserFormModal = ({ isOpen, onClose, user, setUser, refreshUsers }) => {
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>{user ? "Edit User" : "Add User"}</ModalHeader>
-        <ModalCloseButton />
+        <ModalHeader>{isAdding ? "Add User" : "Edit User"}</ModalHeader>
         <ModalBody>
-          <FormControl isRequired>
+          {isAdding && (
+            <FormControl id="id" mb={4} isInvalid={errors.id}>
+              <FormLabel>ID</FormLabel>
+              <Input
+                name="id"
+                value={formData.id}
+                onChange={handleChange}
+                placeholder="Enter ID"
+              />
+              <FormErrorMessage>{errors.id}</FormErrorMessage>
+            </FormControl>
+          )}
+          <FormControl id="name" mt={4} isInvalid={errors.name}>
             <FormLabel>Name</FormLabel>
             <Input
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Enter name"
             />
+            <FormErrorMessage>{errors.name}</FormErrorMessage>
           </FormControl>
-          <FormControl isRequired mt={4}>
+          <FormControl id="email" mt={4} isInvalid={errors.email}>
             <FormLabel>Email</FormLabel>
             <Input
               name="email"
-              type="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter email"
             />
+            <FormErrorMessage>{errors.email}</FormErrorMessage>
           </FormControl>
-          <FormControl isRequired mt={4}>
+          <FormControl id="company" mt={4} isInvalid={errors.company}>
             <FormLabel>Company</FormLabel>
             <Input
               name="company"
               value={formData.company.name}
               onChange={(e) =>
-                setFormData((prevData) => ({
-                  ...prevData,
+                setFormData({
+                  ...formData,
                   company: { name: e.target.value },
-                }))
+                })
               }
-              placeholder="Enter company name"
             />
+            <FormErrorMessage>{errors.company}</FormErrorMessage>
           </FormControl>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="blue" mr={3} onClick={handleSubmit}>
-            {user ? "Save" : "Add"}
-          </Button>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
+          <Button colorScheme="blue" onClick={handleSubmit}>
+            {isAdding ? "Add" : "Save"}
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -142,4 +148,4 @@ const UserFormModal = ({ isOpen, onClose, user, setUser, refreshUsers }) => {
   );
 };
 
-export default UserFormModal;
+export default UserForm;

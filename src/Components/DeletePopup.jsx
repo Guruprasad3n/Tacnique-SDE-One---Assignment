@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   AlertDialog,
   AlertDialogBody,
@@ -7,7 +7,7 @@ import {
   AlertDialogContent,
   AlertDialogOverlay,
   Button,
-} from "@chakra-ui/react";
+} from '@chakra-ui/react';
 
 const DeletePopup = ({ isOpen, onClose, onConfirm, user }) => {
   const cancelRef = React.useRef();
@@ -25,8 +25,7 @@ const DeletePopup = ({ isOpen, onClose, onConfirm, user }) => {
           </AlertDialogHeader>
 
           <AlertDialogBody>
-            Are you sure you want to delete {user.name}? This action cannot be
-            undone.
+            Are you sure you want to delete {user.name}? This action cannot be undone.
           </AlertDialogBody>
 
           <AlertDialogFooter>

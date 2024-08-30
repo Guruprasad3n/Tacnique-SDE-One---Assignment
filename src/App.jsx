@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
 import Navbar from "./Components/Navbar";
 
+
 function App() {
   return (
     <>
